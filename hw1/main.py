@@ -13,7 +13,7 @@ def display(polygons: np.ndarray):
 
     max_x = np.abs(polygons[:,:, 0]).max()
     max_y = np.abs(polygons[:,:, 1]).max()
-
+    
     fin = np.max([max_x, max_y])
     
     plt.xlim(-fin, fin)
@@ -21,8 +21,6 @@ def display(polygons: np.ndarray):
 
     n_figs = polygons.shape[0]
     n_vertices = polygons.shape[1]
-
-    assert n_vertices == 4
 
     plt.grid()
     ax = plt.gca()
@@ -34,15 +32,15 @@ def display(polygons: np.ndarray):
 
     # plt.scatter(cords[:, 0], cords[:, 1], s=170,
     #             color=fin_colors)
-    from matplotlib.patches import RegularPolygon
     for i, poly in enumerate(polygons):
         t = plt.Polygon(poly[:, (0, 1)], alpha=0.5, color=colors[i])
         plt.gca().add_patch(t)
+        print(t)
 
     plt.show()
 
 
-def perenos(arr, Tx=10, Ty=0):
+def perenos(arr, Tx=2, Ty=0):
     mat = np.array([[1, 0, Tx], [0, 1, Ty], [0, 0, 1]])
     res = np.dot(mat, arr.transpose()).transpose()
     return res
@@ -88,30 +86,64 @@ def shear(arr: np.ndarray, alpha=math.pi / 3, beta=math.pi / 3):
     return res
 
 
-def task_1_e(arr: np.ndarray, side_num=0):
-    side_center = (arr[side_num % 3] + arr[ (side_num + 1) % 3]) / 2
+def task_1_a():
+    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    res = perenos(tri)
+    display(np.array([tri, res]))
+
+
+def task_1_b():
+    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
     
-    r1 = homotetia(arr, axis=side_center)
+    res = rotate(tri, fi=np.pi / 3)
+    display(np.array([tri, res]))
+
+
+def task_1_c():
+    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    
+    res = reflect(tri)
+    display(np.array([tri, res]))
+
+
+def task_1_d():
+    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    
+    res = homotetia(tri)
+    display(np.array([tri, res]))
+
+    
+def task_1_e(side_num=0):
+    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    side_center = (tri[side_num % 3] + tri[ (side_num + 1) % 3]) / 2
+    
+    r1 = homotetia(tri, axis=side_center)
     r2 = rotate(r1, axis=side_center)
 
-    return r1, r2
+    display(np.array([tri, r1, r2]))
 
 
-def task_2():
-    arr = [[0, 0, 1], [0, 1, 1], [1, 1, 1], [1, 0, 1]]
-    
+def task_2_a():
+    pass
+
+
+def task_2_b():
+    sqr = np.array([[1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 1, 1]])
+    r1 = shear(sqr)
+    r2 = shear(sqr, alpha=0)
+    r3 = shear(sqr, beta=0)
+    display(np.array([sqr, r1, r2, r3]))
+    pass
+
+
+def task_2_c():
     pass
 
 
 def main():
-    triangle = np.array([[1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 1, 1]])
-    r1 = shear(triangle)
-    r2 = shear(triangle, alpha=0)
-    r3 = shear(triangle, beta=0)
-
-
-    display(np.array([triangle, r1, r2, r3]))
-
+    
+    task_1_e()
+    
     return 0
 
 
