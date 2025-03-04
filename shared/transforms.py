@@ -55,3 +55,18 @@ def reflect(axis='x') -> np.ndarray:
     elif axis == 'y':
         mat = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
     return mat
+
+
+def elipse(a: 1, b: 2) -> np.ndarray:
+    
+    step = 0.01
+    arr = np.array([[a * np.cos(t), b * np.sin(t), 1]
+           for t in np.arange(0, np.pi / 2 + step, step)])
+    q1 = arr
+    
+    
+    q2 = (reflect('y') @ q1.transpose()).transpose()
+    q3 = (reflect('x') @ q2.transpose()).transpose()
+    q4 = (reflect('y') @ q3.transpose()).transpose()
+    l = np.concatenate((q1, q2, q3, q4))
+    return l

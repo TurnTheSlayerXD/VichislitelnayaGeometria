@@ -3,11 +3,7 @@
 import numpy as np
 
 import matplotlib.pyplot as plt
-
-import transforms as tr
-
-import display as dis
-
+    
 
 def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 23, 1])):
 
@@ -82,7 +78,7 @@ def task_2_c():
     p = np.array([ [-3, 0, 1], [3, 0, 1]])
     l_border_window = tr.bezie_line(p, line_order=1)
     
-    l_border_wheels = (tr.perenos(Tx = 0, Ty=-5) @ tr.homotetia(k=3) @ l_border_window.transpose()).transpose()
+    l_border_wheels = (tr.perenos(Tx=0, Ty=-5) @ tr.homotetia(k=3) @ l_border_window.transpose()).transpose()
     
     dis.display_points([l_window,
                         l_roof,
@@ -90,6 +86,7 @@ def task_2_c():
                         l_wheel_left_1, l_wheel_left_2,
                          l_wheel_right_1, l_wheel_right_2,
                          l_border_window, l_border_wheels])
+
 
 def main():
 
@@ -99,4 +96,9 @@ def main():
 
 
 if __name__ == '__main__':
+    import sys
+    sys.path.insert(0, 'C:/Users/Professional/Desktop/VichislitelnayaGeometria/shared')
+    import display as dis 
+    import transforms as tr 
     main()
+    
