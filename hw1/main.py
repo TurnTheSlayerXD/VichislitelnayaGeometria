@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def display(polygons: np.ndarray):
     
     plt.figure()
-    colors = np.array(['red', 'green', 'blue', 'yellow'])
+    colors = np.array(['black', 'red', 'orange', 'yellow', 'green', 'blue', 'violet'])
 
     max_x = np.abs(polygons[:,:, 0]).max()
     max_y = np.abs(polygons[:,:, 1]).max()
@@ -30,122 +30,50 @@ def display(polygons: np.ndarray):
     for color in colors[:n_figs]:
         fin_colors += list(repeat(color, n_vertices))
 
-    # plt.scatter(cords[:, 0], cords[:, 1], s=170,
-    #             color=fin_colors)
     for i, poly in enumerate(polygons):
-        t = plt.Polygon(poly[:, (0, 1)], alpha=0.5, color=colors[i])
+        t = plt.Polygon(poly[:, (0, 1)], alpha=0.5, color=colors[i % len(colors)])
         plt.gca().add_patch(t)
         print(t)
 
     plt.show()
 
 
-def perenos(arr, Tx=2, Ty=0):
-    mat = np.array([[1, 0, Tx], [0, 1, Ty], [0, 0, 1]])
-    res = np.dot(mat, arr.transpose()).transpose()
-    return res
-
-
-def rotate(arr, fi=math.pi / 2, axis=np.array([0, 0])):
-    t1 = perenos(arr, -axis[0], -axis[1])
-    
-    mat = np.array([[np.cos(fi), np.sin(fi), 0], [-np.sin(fi), np.cos(fi), 0], [0, 0, 1]])
-    
-    t2 = (mat @ t1.transpose()).transpose()
-
-    t3 = perenos(t2, axis[0], axis[1]) 
-
-    return t3
-
-
-def reflect(arr, axis='x'):
-    mat = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-    if axis == 'x':
-        mat = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-    return np.dot(mat, arr.transpose()).transpose()
-
-
-def homotetia(arr, axis=np.array([0, 0]), k=2):
-    mat = np.dot(k, np.array([ [1, 0, -axis[0]], [0, 1, -axis[1]], [0, 0, 1 / k] ]))
-    res = np.dot(mat, arr.transpose()).transpose()    
-    return perenos(res, axis[0], axis[1])
-
-
-def composition(arr):
-    f = rotate(arr, math.pi)
-    s = homotetia(f)
-    return s
-
-
-def shear(arr: np.ndarray, alpha=math.pi / 3, beta=math.pi / 3):
-
-    mat = np.array([[1, np.tan(alpha), 0], [np.tan(beta), 1, 0], [0 , 0 , 1]])
-
-    res = (mat @ arr.transpose()).transpose()
-
-    return res
-
-
-def task_1_a():
+def task_1():
     tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
-    res = perenos(tri)
-    display(np.array([tri, res]))
-
-
-def task_1_b():
-    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    a1 = (tr.perenos() @ tri.T).T
+    b1 = (tr.rotate(fi=np.pi / 3) @ tri.T).T
+    c1 = (tr.reflect() @ tri.T).T
+    d1 = (tr.homotetia() @ tri.T).T
     
-    res = rotate(tri, fi=np.pi / 3)
-    display(np.array([tri, res]))
-
-
-def task_1_c():
-    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
+    side_center = (tri[1] + tri[2]) / 2
+    e1 = ((tr.homotetia(axis=side_center) @ tr.rotate(fi=np.pi)) @ tri.T).T
+    f1 = (tr.homotetia(axis=side_center) @ tri.T).T
     
-    res = reflect(tri)
-    display(np.array([tri, res]))
+    display(np.array([tri, a1, b1, c1, d1, e1, f1]))
 
 
-def task_1_d():
-    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
-    
-    res = homotetia(tri)
-    display(np.array([tri, res]))
-
-    
-def task_1_e(side_num=0):
-    tri = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1]])
-    side_center = (tri[side_num % 3] + tri[ (side_num + 1) % 3]) / 2
-    
-    r1 = homotetia(tri, axis=side_center)
-    r2 = rotate(r1, axis=side_center)
-
-    display(np.array([tri, r1, r2]))
+from numpy.linalg import inv
 
 
-def task_2_a():
-    pass
-
-
-def task_2_b():
-    sqr = np.array([[1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 1, 1]])
-    r1 = shear(sqr)
-    r2 = shear(sqr, alpha=0)
-    r3 = shear(sqr, beta=0)
-    display(np.array([sqr, r1, r2, r3]))
-    pass
-
-
-def task_2_c():
-    pass
+def task_2():
+    sqr = np.array([[0, 0, 1], [0, 1, 1], [1, 1, 1], [1, 0, 1]])
+    trans = tr.perenos(Tx=2) @ tr.shear(alpha=np.pi / 3, beta=np.pi / 3)
+    r1 = (trans @ sqr.T).T
+    r1_inv = (tr.rotate(fi=np.pi / 3) @ inv(trans) @ r1.T).T
+    display(np.array([sqr, r1, r1_inv]))
 
 
 def main():
     
-    task_1_e()
+    task_1()
+    task_2()
     
     return 0
 
 
 if __name__ == "__main__":
+    import sys 
+    sys.path.insert(0, 'C:/Users/Professional/Desktop/VichislitelnayaGeometria/shared')
+    import display as dis 
+    import transforms as tr 
     main()

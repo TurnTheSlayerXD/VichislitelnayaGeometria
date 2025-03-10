@@ -26,7 +26,8 @@ def homotetia(axis=np.array([0, 0]), k=2) -> np.ndarray:
 
 
 def shear(alpha=np.pi / 3, beta=np.pi / 3) -> np.ndarray:
-    mat = np.array([[1, np.tan(alpha), 0], [np.tan(beta), 1, 0], [0 , 0 , 1]])
+    
+    mat = np.array([[1, np.tan(alpha), 0], [np.tan(beta), 1, 0], [0, 0, 1]])
     return mat
 
 
@@ -63,7 +64,6 @@ def elipse(a: 1, b: 2) -> np.ndarray:
     arr = np.array([[a * np.cos(t), b * np.sin(t), 1]
            for t in np.arange(0, np.pi / 2 + step, step)])
     q1 = arr
-    
     
     q2 = (reflect('y') @ q1.transpose()).transpose()
     q3 = (reflect('x') @ q2.transpose()).transpose()
