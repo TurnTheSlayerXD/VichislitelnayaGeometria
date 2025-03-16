@@ -1,0 +1,12 @@
+{
+    "python.autoComplete.extraPaths": [
+        "./hw3",
+        "./hw1/transforms",
+    ],
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "standard",
+    "python.defaultInterpreterPath": "python",
+    "python.analysis.extraPaths": [
+        "./shared"
+    ],
+}

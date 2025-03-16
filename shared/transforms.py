@@ -2,7 +2,9 @@
 import numpy as np
 
 
-def perenos(Tx=2, Ty=0) -> np.ndarray:
+EPS = 10 ** -6
+
+def perenos(Tx=2., Ty=0.) -> np.ndarray:
     mat = np.array([[1, 0, Tx], [0, 1, Ty], [0, 0, 1]])
     return mat
 
@@ -10,7 +12,7 @@ def perenos(Tx=2, Ty=0) -> np.ndarray:
 def rotate(fi=np.pi / 2, axis=np.array([0, 0])) -> np.ndarray:
     mat_forw = perenos(-axis[0], -axis[1])
     
-    mat_rot = np.array([[np.cos(fi), np.sin(fi), 0], [-np.sin(fi), np.cos(fi), 0], [0, 0, 1]])
+    mat_rot = np.array([[np.cos(fi), -np.sin(fi), 0], [np.sin(fi), np.cos(fi), 0], [0, 0, 1]])
 
     mat_back = perenos(axis[0], axis[1]) 
 
@@ -19,7 +21,7 @@ def rotate(fi=np.pi / 2, axis=np.array([0, 0])) -> np.ndarray:
     return res
 
 
-def homotetia(axis=np.array([0, 0]), k=2) -> np.ndarray:
+def homotetia(axis=np.array([0, 0]), k =2.) -> np.ndarray:
     mat = k * np.array([ [1, 0, -axis[0]], [0, 1, -axis[1]], [0, 0, 1 / k] ])
     res = perenos(axis[0], axis[1]) @ mat   
     return res
@@ -49,16 +51,29 @@ def bezie_line(points: np.ndarray, line_order: int=2) -> np.ndarray:
     return final
 
 
-def reflect(axis='x') -> np.ndarray:
-    mat = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-    if axis == 'x':
-        mat = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
-    elif axis == 'y':
-        mat = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+def reflect(axis : np.ndarray | str ='x') -> np.ndarray:
+    mat : np.ndarray
+    if isinstance(axis, str):
+        if axis == 'x':
+            mat = np.array([[1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        elif axis == 'y':
+            mat = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    elif isinstance(axis,np.ndarray):
+        mat = np.array([ [*axis[0], 0], [*axis[1], 0], [0, 0, 1] ])
+    else:
+        raise NotImplementedError()    
     return mat
 
 
-def elipse(a: 1, b: 2) -> np.ndarray:
+def stretch(k:int= 2, axis: str='x') -> np.ndarray:
+    if axis == 'x':
+        return np.array([[k, 0, 0], [0, 1, 0], [0, 0, 1]])
+    elif axis == 'y':
+        return np.array([[1, 0, 0], [0, k, 0], [0, 0, 1]])
+    raise NotImplementedError()
+    
+
+def elipse(a= 1, b= 2) -> np.ndarray:
     
     step = 0.01
     arr = np.array([[a * np.cos(t), b * np.sin(t), 1]
@@ -70,3 +85,8 @@ def elipse(a: 1, b: 2) -> np.ndarray:
     q4 = (reflect('y') @ q3.transpose()).transpose()
     l = np.concatenate((q1, q2, q3, q4))
     return l
+
+
+from numpy.linalg import norm
+def angle_btwn_vecs(v1, v2):
+    return np.acos((v1 @ v2) / norm(v1) / norm(v2))
