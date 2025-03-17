@@ -22,7 +22,7 @@ def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 23, 1])):
         points[i][1] = points[i - 1][1] if di_prev < 0 else points[i - 1][1] + 1  
         di_prev = di
 
-    dis.display_points(np.array([points]))
+    dis.display_points([points])
 
 
 def task_2_a():
@@ -80,6 +80,7 @@ def task_2_c():
     
     l_border_wheels = (tr.perenos(Tx=0, Ty=-5) @ tr.homotetia(k=3) @ l_border_window.transpose()).transpose()
     
+    
     dis.display_points([l_window,
                         l_roof,
                         l_back, l_front,
@@ -90,6 +91,10 @@ def task_2_c():
 
 def main():
 
+    
+    task_1()
+    task_2_a()
+    task_2_b()
     task_2_c()
 
     pass
