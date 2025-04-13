@@ -99,7 +99,7 @@ def get_tangent_of_fig(fig, t, prev: np.ndarray, step) -> np.ndarray:
     x = fig.x(t)
     y = fig.y(t)
     prime = fig.prime(t)
-
+    
     if not prime is None:
         k = prime
         c = -prime * x + y
@@ -112,9 +112,8 @@ def get_tangent_of_fig(fig, t, prev: np.ndarray, step) -> np.ndarray:
     return l
 
 
-def task_1_elipse():
+def task_1_elipse(n=25):
     elipse: Elipse = Elipse(10, 4)
-    n = 10
     step = 2 * np.pi / n
     arr = []
     prev = np.array([elipse.x(0), elipse.y(0), 1])
@@ -149,9 +148,7 @@ def task_1_elipse():
     dis.display_points([l1, l2], ['Elipse', 'Elipse Evolute'])
 
 
-def task_1_hyperbole():
-    n = 10
-
+def task_1_hyperbole(n=25):
     hyperbole = Hyperbole(10, 10)
     step = 2 * np.pi / n
     arr = []
@@ -237,10 +234,10 @@ class Rosa:
         self.k = k
 
     def x(self, t):
-        return self.a * np.sin(self.k * t) * np.cos(t)
+        return self.a * np.cos(self.k * t) * np.cos(t)
 
     def y(self, t):
-        return self.a * np.sin(self.k * t) * np.sin(t)
+        return self.a * np.cos(self.k * t) * np.sin(t)
 
     def prime(self, t):
         k = self.k
@@ -249,13 +246,58 @@ class Rosa:
         sint = np.sin(t)
         cost = np.cos(t)
 
-        if IsZero(k * coskt * cost - sinkt * sint):
+        if IsZero(-sint * coskt - k * sinkt * cost):
             return None
-        return (k * coskt * sint + sinkt * cost) \
-            / (k * coskt * cost - sinkt * sint)
+        return (cost * coskt - k * sinkt * sint) \
+            / (-sint * coskt - k * sinkt * cost)
 
 
-def task_2(n=10):
+
+def get_tangent(fig, t):
+    x = fig.x(t)
+    y = fig.y(t)
+    prime = fig.prime(t)
+    
+    if not prime is None:
+        k = prime
+        c = -prime * x + y
+        
+        step = 1
+        while k * (x + step) + c > y + 5:
+            step /= 2  
+        l = tr.bezie_line(np.array([[x-step, k*(x - step) + c, 1],
+                                    [x+step, k*(x + step) + c, 1]]), line_order=1)
+    else:
+        l = tr.bezie_line(np.array([[x, y-1, 10],
+                                    [x, y+1, 1]]), line_order=1)
+
+    return l
+
+
+def get_normal(fig, t):
+    x = fig.x(t)
+    y = fig.y(t)
+    prime = fig.prime(t)
+    
+    if not prime is None and not np.isclose(prime, 0., atol=10**-3):
+        k = -1 / prime
+        c = -k * x + y
+        
+        step = 1
+        count = 0
+        while k * (x + step) + c > y + 3 and count < 50:
+            step /= 2  
+            count += 1
+        
+        l = tr.bezie_line(np.array([[x-step, k * (x - step) + c , 1],
+                                    [x+step, k * (x + step) + c, 1]]), line_order=1)
+    else:
+        l = tr.bezie_line(np.array([[x, y-1, 1],
+                                    [x, y+1, 1]]), line_order=1)
+
+    return l
+
+def task_2(n=50):
     step = 2 * np.pi / n
     arr = []
     spiral = ArchimedSpiral(1)
@@ -265,7 +307,10 @@ def task_2(n=10):
         arr.extend(line)
         prev = line[-1]
     l1 = np.array(arr)
-    dis.display_points([l1], ['Archimed Spiral'])
+    tang = get_tangent(spiral, np.pi / 2)
+    norm = get_normal(spiral, np.pi / 2)
+
+    dis.display_points([l1, tang, norm], ['Archimed Spiral', 'Archimed Spiral tangent', 'Archimed Spiral normal'])
 
     arr = []
     spiral = LogSpiral(0.01, 0.15)
@@ -276,31 +321,42 @@ def task_2(n=10):
         prev = line[-1]
 
     l2 = np.array(arr)
+    tang = get_tangent(spiral, np.pi * 8.5)
+    norm = get_normal(spiral, np.pi * 8.5)
 
-    dis.display_points([l2], ['Log Spiral'])
+    dis.display_points([l2, tang, norm], ['Log Spiral', 'Log Spiral tangent', 'Log Spiral normal'])
 
 
-def task2_rosa():
-    n = 10
+
+
+def task2_rosa(n=25):
     step = 2 * np.pi / n
     arr = []
-    rosa = Rosa(6, 5)
+    rosa = Rosa(10, 4)
     prev = np.array([rosa.x(0), rosa.y(0), 1])
 
     for fi in np.arange(0, np.pi * 2, step):
         line = get_tangent_of_fig(rosa, fi, prev, step)
         arr.extend(line)
         prev = line[-1]
+        
+    tang = get_tangent(rosa, 2 * np.pi / 6)
+    norm = get_normal(rosa, 2 * np.pi / 6)
+
     l1 = np.array(arr)
-    dis.display_points([l1], ['Rosa'])
+    # dis.display_points([l1], ['Rosa', 'Rosa Tangent', 'Rosa Normal'])
+
+    dis.display_points([l1, tang, norm], ['Rosa', 'Rosa Tangent', 'Rosa Normal'])
 
 
 def main():
-    task_1_elipse()
-    task_1_hyperbole()
+    n = 20
+    
+    task_1_elipse(n)
+    task_1_hyperbole(n)
 
-    task_2()
-    task2_rosa()
+    task_2(n)
+    task2_rosa(500)
     pass
 
 

@@ -1,9 +1,15 @@
 
 
-import sys
-import warnings
+from functools import reduce
+
+from bisect import bisect_left, bisect_right
+
 import numpy as np
 import matplotlib.pyplot as plt
+
+
+def dist(p1, p2) -> np.float64:
+    return np.float64(np.linalg.norm(p2 - p1))
 
 
 def display_points(points, segments, labels=['unknown']):
@@ -17,66 +23,114 @@ def display_points(points, segments, labels=['unknown']):
     np.clip
     plt.show()
 
-def unit_vector(vector):
-    return vector / np.linalg.norm(vector)
 
-def angle_between(v1, v2):
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+def recurs(points: np.ndarray, l, r):
 
-def find_start_point(points : np.ndarray):
+    by_x = lambda p: p[0]
+    by_y = lambda p: p[1]
+    assert r - l > 1
+
+    if (r - l <= 3):
+        if (r - l == 2):
+            return points[l], points[l+1]
+        else:
+            dists = [(points[l], points[l+1]),
+                     (points[l], points[l+2]),
+                     (points[l+1], points[l+2])]
+            dists.sort(key=lambda seg: dist(seg[0], seg[1]))
+            return dists[0][0], dists[0][1]
+
+    mid = (l + r) // 2
     
-    res = [sys.maxsize, sys.maxsize]
-    ind = sys.maxsize
-    for i, p in enumerate(points):
-        if p[1] < res[1] or p[1] == res[1] and p[0] < res[0]:
-            res = p
-            ind = i 
-    return ind
-
-def sort_related(p0, points):
-    base = np.array([p0[0] + 10, p0[1]]) - p0
-    return sorted(points, key=lambda p: angle_between(base,p - p0))
-
-def conv_grakham(points: np.ndarray):
-
-    p0_ind = find_start_point(points)
     
-    to_sort = np.concat([points[0 : p0_ind],
-                        points[p0_ind+1:len(points)]])
-    sorted_ps = sort_related(points[p0_ind], to_sort)
-    p0 = points[p0_ind]
+    l1, l2 = recurs(points, l, mid)
+    r1, r2 = recurs(points, mid, r)
 
-    stack = [p0, sorted_ps[0]]
-    for i in range(1, len(sorted_ps)):
-        assert len(stack) >= 2
-        next_to_top = stack[-2]
-        top = stack[-1]
-        pi = sorted_ps[i]
-        while np.cross(pi - top, next_to_top - top) < 0:
-            stack.pop()
-            assert len(stack) >= 2
-            next_to_top = stack[-2]
-            top = stack[-1]
-        stack.append(pi)
-    return np.array(stack)
+    assert type(r1) is np.ndarray and type(r2) is np.ndarray
+    
+    assert all([points[i][0] < points[i+1][0] for i in range(len(points) - 1)])
+    
+    dist_left = dist(l1, l2)
+    dist_right = dist(r1, r2)
+    
+    (min_dist, min_p1, min_p2) = (dist_left, l1, l2) if dist_left < dist_right\
+        else (dist_right, r1, r2)
+        
+    x_mean = points[mid][0]
 
-def gen_points(count, sqr_size):
-    res = np.random.random_sample((count, 2)) * sqr_size
+    B_left = points[bisect_left(points, x_mean - min_dist, l , mid, key=by_x):mid]
+    
+    B_right = points[mid:bisect_right(points, x_mean + min_dist, mid, r, key=by_x)]
+    print('\n')
 
-    return res
+    print(f'points={points[l:r]}')
+    print(f'left={B_left}')
+    print(f'right={B_right}')
+    
+
+    B_right = np.array(sorted(B_right, key=by_y))
+
+    assert all([B_right[i][1] < B_right[i+1][1] for i in range(len(B_right) - 1)])
+
+  
+
+    distance = np.copy(min_dist)
+    
+    for p_left in B_left:
+        low = bisect_left(B_right, p_left[1] - distance, key=by_y)
+        high = bisect_right(B_right, p_left[1] + distance, key=by_y)
+        for p_right in B_right[low - 1:high + 1]:
+            val = dist(p_left, p_right)
+            if val < min_dist:
+                min_dist = val
+                print(min_dist)
+                min_p1 = p_left
+                min_p2 = p_right
+
+    return np.array(min_p1), np.array(min_p2)
+
+
+def closest_points(points):
+    points = np.array(list(sorted(points, key=lambda x: x[0])))
+    return recurs(points, 0, len(points))
+
+
+
+def Fortune_Algorithm():
+    
+    
+    
+
+
+
 
 def main():
-    warnings.filterwarnings('ignore')
 
-    points = gen_points(10**2, 10**3)
-    conv = conv_grakham(points)
+    points = np.array([[3.5, 0], [2.5, 4], [4, 3],
+                       [5, 1.5], [3, 0], [2, 2], [1, 1]])
+
+    points = np.random.rand(20, 2)
     
-    # print(points)
+    
+                            
 
-    # print(conv.shape)
-    display_points(points, conv)
+    print(f'Points = {points}')
+    p1, p2 = closest_points(points)
+
+    display_points(points, np.array([p1, p2]))
+
+    print(p1, p2)
+
+
 
 if __name__ == '__main__':
+
     main()
+
+
+# 0.13 0.3
+
+# 0.37 0.5
+
+# 0.46 0.64
+
