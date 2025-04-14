@@ -5,24 +5,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 23, 1])):
 
-    dx = B[0] - A[0]
-    dy = B[1] - A[1]
+import matplotlib.pyplot as plt
 
-    n_points = dx + 1
-    points = np.array([[i, 0, 1] for i in range(A[0], B[0] + 1)])
+def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 20, 1])):
+    x0, y0, _ = A
+    x1, y1, _ = B
 
-    points[0] = A
-    di_prev = 2 * (points[0][0] * dy - points[0][1] * dx) + 2 * dy - dx
-    points[1][1] = points[0][1] if di_prev < 0 else points[0][1] + 1
+    steep = y1 - y0 > x1 - x0
+    if steep:
+        x0, y0 = y0, x0
+        x1, y1 = y1, x1
+    if x0 > x1:
+        x0, x1 = x1, x0
+        y0, y1 = y1, y0
+    
+    dx = np.abs(x1 - x0)
+    dy = np.abs(y1 - y0)
+    
+    error = dx / 2
+    ystep = 1 if y0 < y1 else -1 
+    
+    y = y0
+    points = []
+    for x in range(x0, x1 + 1):
+        points.append([y, x] if steep else [x, y])
+        error -= dy
+        if error < 0:
+            y += ystep
+            error += dx
 
-    for i in range(2, n_points):
-        di = di_prev + 2 * dy - (points[i - 1][1] - points[i - 2][1]) * dx
-        points[i][1] = points[i - 1][1] if di_prev < 0 else points[i - 1][1] + 1
-        di_prev = di
+    k = dy / dx
+    c = B[1] - k * B[0] 
 
-    dis.display_points([points])
+    x_ = list(range(A[0], B[0] + 1))
+    points2 = np.array([ [x, int(k * x + c)] for x in x_])
+
+
+    points = np.array(points)
+
+    plt.grid()
+    ax = plt.gca()
+    ax.set_aspect('equal', adjustable='box')
+    plt.plot(points[:, 0], points[:, 1], 'o', color='black', markersize=4,
+            label='Brezenheim')
+    plt.plot(points2[:, 0], points2[:, 1], 'o', color='red', markersize=2,
+             label='By equation')
+    plt.legend(loc='best')
+    plt.show()
+
 
 
 def task_2_a():
@@ -37,7 +68,8 @@ def task_2_a():
     r4 = tr.homotetia() @ r3
 
     dis.display_points(
-        [final, r1.transpose(), r2.transpose(), r3.transpose(), r4.transpose()])
+        [final, r1.transpose(), r2.transpose(), r3.transpose(), r4.transpose()],
+        ['Begin stage', 'Rotate stage', 'Shear stage', 'Perenos stage', 'Homotetia stage'])
 
 
 def task_2_b():

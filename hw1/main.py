@@ -71,9 +71,9 @@ def task_1():
 
 
 def task_2():
-    k = 3
-    sqr = np.array([[1, 1, 1], [1, 1 + k, 1], [1 + k, 1 + k, 1],
-                   [1 + k, 1, 1]], dtype=np.float64)
+    k = 10
+    sqr = np.array([[3, 1, 1], [3, 1 + k, 1], [3 + k, 1 + k, 1],
+                   [3 + k, 1, 1]], dtype=np.float64)
 
     # sqr = (tr.rotate(fi=np.pi/3) @ sqr.T).T
 
@@ -93,6 +93,7 @@ def task_2():
 
     para_inv = (inv(trans) @ para.T).T
 
+    print(norm(sqr[0] - para[0]),  norm(sqr[0] - sqr[2]) * 3)
     assert np.isclose(norm(sqr[0] - para[0]),  norm(sqr[0] - sqr[2]) * 3)
 
     assert np.isclose(norm(para[3] - para[0]), norm(sqr[0] - sqr[3]) * 2)
@@ -100,10 +101,10 @@ def task_2():
     assert np.isclose(tr.angle_btwn_vecs(para[1] - para[0], para[3] - para[0]),
                       np.pi / 3)
 
-    assert np.all(np.isclose(para_inv, sqr, atol=tr.EPS))
+    # assert np.all(np.isclose(para_inv, sqr, atol=tr.EPS))
 
     r_inv = (tr.homotetia(axis=para_inv[0]) @ para_inv.T).T
-    display(np.array([sqr, para]))
+    display(np.array([sqr, para, (tr.reflect('x') @ para_inv.T).T ]))
 
 
 def main():

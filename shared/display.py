@@ -40,7 +40,6 @@ def display_polys(polygons: np.ndarray):
 
 def display_points(points: list, labels=['unknown']):
     
-    plt.figure()
     colors = np.array(['black', 'red', 'orange', 'yellow', 'green', 'blue', 'violet'])
   
     plt.grid()
@@ -49,9 +48,14 @@ def display_points(points: list, labels=['unknown']):
     ax.set_aspect('equal', adjustable='box')
 
     for i, line in enumerate(points):
-        plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=2,
-                 label=labels[i % len(labels)])
-        
+        label=labels[i % len(labels)]
+        if label != 'unknown':
+            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=2,
+                    label=labels[i % len(labels)])
+        else:
+            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=2)
+
+            
     plt.legend(loc='best')
 
     plt.show()
