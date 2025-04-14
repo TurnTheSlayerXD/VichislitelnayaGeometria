@@ -167,7 +167,6 @@ def intersect_segs(seg1 : Segment, seg2 : Segment):
         
 def Bentley_Ottmann(segments):
     
-    from sortedcontainers import SortedDict
     from heapq import heapify, heappush, heappop
     
     from bisect import bisect_left, bisect_right

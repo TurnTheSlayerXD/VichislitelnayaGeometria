@@ -191,6 +191,7 @@ def sutherland_hodgman(subject_polygon, clip_polygon):
                 inter = intersection(P, Q, A, B)
                 if inter:
                     output_list.append(inter)
+        
     return output_list
 
 
@@ -249,10 +250,10 @@ def task2():
 
 
 def task3():
-    points_f = gen_points(10, 10**2)
+    points_f = gen_points(20, 10**2)
     conv = conv_jarvis(points_f)
     
-    points_s = gen_points(10, 10**2)
+    points_s = gen_points(20, 10**2)
     conv2 = conv_jarvis(points_s)
     
     result = sutherland_hodgman(conv, conv2)
