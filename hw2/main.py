@@ -42,11 +42,9 @@ class Elipse:
         return self.b * np.sin(t)
 
     def prime(self, t):
-        if t == np.pi / 2:
-            return None
-        if np.isclose(np.tan(t), 0, atol=10**-2):
-            return None
-        if (np.isclose(np.cos(t), 0, atol=10**-2)):
+        # if np.isclose(np.cos(t), 0, atol=10**-4) or np.isclose(np.tan(t), 0, atol=10**-4):
+        #     return None
+        if np.isclose(np.tan(t), 0, atol=10**-4):
             return None
         return -self.b / self.a * 1 / np.tan(t)
 
@@ -118,13 +116,6 @@ def get_tangent_of_fig(fig, t, prev: np.ndarray, step) -> np.ndarray:
     return l
 
 
-def intersect_lines(k1, c1, k2, c2, prev_x, step):
-    if k1 is None:
-        return [prev_x, k2 * prev_x + c2]
-
-    return x, y
-
-
 class Line:
 
     def __init__(self, k=float | None, c=float | None, x=float | None):
@@ -135,6 +126,8 @@ class Line:
 
     def intersect(self, rhs: 'Line'):
         if self.k is None and rhs.k is None:
+            if np.isclose(self.x, rhs.x, atol=10**-4):
+                return np.array([self.x, 0])
             raise RuntimeError()
         if self.k is None:
             return np.array([self.x, rhs.k * self.x + rhs.c])
@@ -145,7 +138,7 @@ class Line:
         return np.array([x, y])
 
 
-def get_tang_real(fig, t, step, prev_line: Line) -> tuple[np.ndarray, Line]:
+def get_tang_real(fig, t, step, prev_line: Line | None) -> tuple[np.ndarray, Line]:
     x = fig.x(t)
     y = fig.y(t)
     prime = fig.prime(t)
@@ -156,8 +149,18 @@ def get_tang_real(fig, t, step, prev_line: Line) -> tuple[np.ndarray, Line]:
     else:
         c = -k * x + y
         line = Line(k, c)
-
+    
+    if prev_line is None:
+        if t == 0:
+            print('hi', x - step, x + step)
+        if k is None:
+            return np.array([[x, y - step], [x, y + step]]), line
+        else:
+            return np.array([[x-step, k*(x-step) + c], [x+step, k*(x+step) + c]]), line
+        
     inter = line.intersect(prev_line)
+    if t == 3 * np.pi / 2:
+        print(k)
 
     if k is None:
         return np.array([inter, [x, y + step]]), line
@@ -179,7 +182,7 @@ def display_points(points: list, rest=[], labels=['unknown']):
 
 
 def task_1_elipse(n=50):
-    elipse: Elipse = Elipse(3, 5)
+    elipse: Elipse = Elipse(3, 6)
     step = 10 ** -2
     arr = []
     prev = np.array([elipse.x(0), elipse.y(0), 1])
@@ -188,16 +191,24 @@ def task_1_elipse(n=50):
     l1 = np.array(arr)
 
     step = 2 * np.pi / 10
-    segs = []
-    prev = Line(1, 0, 0.)
-    for fi in np.arange(0, 2 * np.pi, step):
-        step_fi = np.cos(fi) * step
-        (seg, prev) = get_tang_real(elipse, fi, step_fi, prev)
-        print(type(prev))
+    
+    (seg, prev) = get_tang_real(elipse, 0, 100, None)
+    segs = [seg]
+    step = np.pi / 5
+    print(segs)
+    start_line = prev
+    for fi in np.arange(step, 2 * np.pi, step):
+        (seg, prev) = get_tang_real(elipse, fi, 100, prev)
+        segs[-1][1] = seg[0]
         segs.append(seg)
+    end_line = prev
 
+    p = start_line.intersect(end_line)
+    segs[0][0] = p    
+    segs[-1][1] = p
+    
     elipse_evolute = ElipseEvolute(elipse.a, elipse.b)
-
+    
     arr = []
     step = 10**-1
     for fi in np.arange(-10, 10, step):
@@ -205,26 +216,46 @@ def task_1_elipse(n=50):
 
     l2 = np.array(arr)
 
-    display_points([l1, l2], segs, ['Elipse', 'Elipse Evolute'])
+    colors = np.array(['black', 'red', 'orange', 'yellow',
+                      'green', 'blue', 'violet'])
+    plt.grid()
+    for i, batch in enumerate([l1, l2]):
+        plt.plot(batch[:, 0], batch[:, 1])
+    for i, batch in enumerate(segs):
+        plt.plot(batch[:, 0], batch[:, 1], linewidth=3.)
+        
+    plt.xlim([-10,10])
+    plt.ylim([-10,10])
+    plt.show()
 
 
 def task_1_hyperbole(n=25):
-    hyperbole = Hyperbole(5., 3.)
+    hyperbole = Hyperbole(5., 2.)
     step = 10 ** -2
     arr = []
-    for fi in np.arange(-2, 2, step):
+    for fi in np.arange(-10, 10, step):
         arr.append([hyperbole.x(fi), hyperbole.y(fi), 1])
 
     l1 = np.array(arr)
     l1_2 = (tr.reflect('y') @ l1.T).T
 
-    step = 10 ** -1 * 10
-    segs = []
-    for fi in np.arange(-2, 2, step):
-        step_fi = np.cos(fi) * step
-        print(step_fi)
-        segs.append(get_tang_real(hyperbole, fi, step_fi, prev))
-
+    step = 1
+    
+    start = -8
+    end = 8
+    (seg, prev) = get_tang_real(hyperbole, start, 100, None)
+    segs = [seg]
+    step = 1
+    for fi in np.arange(start + step, end, step):
+        (seg, prev) = get_tang_real(hyperbole, fi, 100, prev)
+        segs[-1][1] = seg[0]
+        segs.append(seg)
+        
+    for i,seg in enumerate(segs):
+        segs[i] = np.hstack((seg, np.ones((seg.shape[0],1))))
+    
+    segs_1 = [(tr.reflect('y') @ seg.T).T for seg in segs]    
+    
     hyperbole_evolute = HyperboleEvolute(hyperbole.a, hyperbole.b)
     step = 10 ** -2
     arr = []
@@ -233,8 +264,18 @@ def task_1_hyperbole(n=25):
     l2 = np.array(arr)
     l2_2 = (tr.reflect('y') @ l2.T).T
 
-    display_points([l1, l1_2, l2, l2_2], segs, [
-                   'Hyperbole', 'Hyperbole Evolute'])
+    colors = np.array(['black', 'red', 'orange', 'yellow',
+                      'green', 'blue', 'violet'])
+    plt.grid()
+    for i, batch in enumerate([l1,l1_2, l2,l2_2]):
+        plt.plot(batch[:, 0], batch[:, 1])
+    for i, batch in enumerate(segs + segs_1):
+        plt.plot(batch[:, 0], batch[:, 1], linewidth=3.)
+        
+    plt.xlim([-50,50])
+    plt.ylim([-20,20])
+    plt.show()
+
 
 
 def IsZero(a):
@@ -410,8 +451,8 @@ def main():
     task_1_elipse(n)
     task_1_hyperbole(n)
 
-    # task_2(n)
-    # task2_rosa(500)
+    task_2(n)
+    task2_rosa(500)
     pass
 
 
