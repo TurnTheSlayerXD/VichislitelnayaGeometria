@@ -11,21 +11,24 @@ def perp(a):
     b[1] = a[0]
     return b
 
-
-def seg_intersect(a1, a2, b1, b2):
-    da = a2 - a1
-    db = b2 - b1
-    dp = a1 - b1
-    dap = perp(da)
-    denom = np.dot(dap, db)
-    num = np.dot(dap, dp)
-
+def intersect_param(seg1, seg2):
+    A, B = seg1
+    C, D = seg2
+    dx1 = B[0] - A[0]
+    dy1 = B[1] - A[1]
+    dx2 = D[0] - C[0]
+    dy2 = D[1] - C[1]
+    denom = dx1 * dy2 - dy1 * dx2
     if denom == 0:
-        denom = EPS
+        return None
+    dx = C[0] - A[0]
+    dy = C[1] - A[1]
+    t = (dx * dy2 - dy * dx2) / denom
+    u = (dx * dy1 - dy * dx1) / denom
 
-    db[db == 0] = EPS
-
-    return (num / denom + EPS) * db + b1
+    if 0 <= t <= 1 and 0 <= u <= 1:
+        return np.array([A[0] + t * dx1, A[1] + t * dy1])
+    return None
 
 
 class Elipse:
@@ -95,7 +98,14 @@ class HyperboleEvolute:
             / (self.a * (1 + (self.b / self.a) ** 2)) * np.sinh(t) / np.cosh(t)
 
 
-def get_tangent_of_fig(fig, t, prev: np.ndarray, step) -> np.ndarray:
+def intersect_lines(k1, c1, k2, c2):
+    if np.isclose(k1, k2, atol=10**-3):
+        return None, None
+    x = (c2 - c1) / (k1 - k2)
+    y = k1 * x + c1
+    return x, y
+
+def get_tangent_of_fig(fig, t, prev_k, prev_c, step=0.3):
     x = fig.x(t)
     y = fig.y(t)
     prime = fig.prime(t)
@@ -103,24 +113,32 @@ def get_tangent_of_fig(fig, t, prev: np.ndarray, step) -> np.ndarray:
     if not prime is None:
         k = prime
         c = -prime * x + y
-        l = tr.bezie_line(np.array([prev,
-                                    [x, k * x + c, 1]]), line_order=1)
+        if prev_k is not None:
+            p_x, p_y = intersect_lines(prev_k, prev_c, k, c)
+        else:
+            p_x, p_y = x - step, k *(x - step) + c
+        if p_x is not None:
+            l = tr.bezie_line(np.array([[p_x, p_y, 1],
+                                        [x, k * x + c, 1]]), line_order=1)
+        else:
+            l = tr.bezie_line(np.array([[x - step, k * (x - step) + c, 1],
+                                        [x, k * x + c, 1]]), line_order=1)
+        return l, k, c
     else:
-        l = tr.bezie_line(np.array([prev,
+        l = tr.bezie_line(np.array([[x, y - step,1],
                                     [x, y + step, 1]]), line_order=1)
 
-    return l
+        return l, None, None
 
 
-def task_1_elipse(n=25):
+def task_1_elipse(n=100.):
     elipse: Elipse = Elipse(10, 4)
     step = 2 * np.pi / n
     arr = []
-    prev = np.array([elipse.x(0), elipse.y(0), 1])
+    k_prev, c_prev = None, None
     for fi in np.arange(0, np.pi / 2, step):
-        line = get_tangent_of_fig(elipse, fi, prev, step)
+        line, k_prev, c_prev = get_tangent_of_fig(elipse, fi, k_prev, c_prev, step)
         arr.extend(line)
-        prev = line[-1]
 
     q1 = np.array(arr)
     q2 = (tr.reflect('y') @ q1.T).T
@@ -134,10 +152,10 @@ def task_1_elipse(n=25):
     arr = []
     prev = np.array([elipse_evolute.x(0), elipse_evolute.y(0), 1])
 
+    k_prev, c_prev = None, None
     for fi in np.arange(0, np.pi / 2, step):
-        line = get_tangent_of_fig(elipse_evolute, fi, prev, step + 1)
+        line,k_prev, c_prev = get_tangent_of_fig(elipse_evolute, fi, k_prev, c_prev)
         arr.extend(line)
-        prev = line[-1]
 
     q1 = np.array(arr)
     q2 = (tr.reflect('y') @ q1.T).T
@@ -148,39 +166,39 @@ def task_1_elipse(n=25):
     dis.display_points([l1, l2], ['Elipse', 'Elipse Evolute'])
 
 
-def task_1_hyperbole(n=25):
-    hyperbole = Hyperbole(10, 10)
+def task_1_hyperbole(n=100):
+    hyperbole = Hyperbole(3, 3)
     step = 2 * np.pi / n
     arr = []
-    prev = np.array([hyperbole.x(0), hyperbole.y(0), 1])
+    k_prev, c_prev = None, None
     for fi in np.arange(0, np.pi / 2, step):
-        line = get_tangent_of_fig(hyperbole, fi, prev, step)
+        line, k_prev, c_prev = get_tangent_of_fig(hyperbole, fi, k_prev, c_prev)
+        print(k_prev, c_prev)
         arr.extend(line)
-        prev = line[-1]
 
     q1 = np.array(arr)
     q2 = (tr.reflect('y') @ q1.T).T
     q3 = (tr.reflect('x') @ q2.T).T
     q4 = (tr.reflect('y') @ q3.T).T
     l1 = np.concatenate((q1, q2, q3, q4))
+    
+    print(l1)
 
-    hyperbole_evolute = HyperboleEvolute(hyperbole.a, hyperbole.b)
-    step = 2 * np.pi / n
-    arr = []
-    prev = np.array([hyperbole_evolute.x(0), hyperbole_evolute.y(0), 1])
+    # hyperbole_evolute = HyperboleEvolute(hyperbole.a, hyperbole.b)
+    # step = 2 * np.pi / n
+    # arr = []
+    # k_prev, c_prev = None, None
+    # for fi in np.arange(0, np.pi / 4, step):
+    #     line, k_prev, c_prev = get_tangent_of_fig(hyperbole_evolute, fi, k_prev, c_prev)
+    #     arr.extend(line)
 
-    for fi in np.arange(0, np.pi / 4, step):
-        line = get_tangent_of_fig(hyperbole_evolute, fi, prev, step)
-        arr.extend(line)
-        prev = line[-1]
+    # q1 = np.array(arr)
+    # q2 = (tr.reflect('y') @ q1.T).T
+    # q3 = (tr.reflect('x') @ q2.T).T
+    # q4 = (tr.reflect('y') @ q3.T).T
+    # l2 = np.concatenate((q1, q2, q3, q4))
 
-    q1 = np.array(arr)
-    q2 = (tr.reflect('y') @ q1.T).T
-    q3 = (tr.reflect('x') @ q2.T).T
-    q4 = (tr.reflect('y') @ q3.T).T
-    l2 = np.concatenate((q1, q2, q3, q4))
-
-    dis.display_points([l1, l2], ['Hyperbole', 'Hyperbole Evolute'])
+    dis.display_points([l1], ['Hyperbole', 'Hyperbole Evolute'])
 
 
 def IsZero(a):
@@ -352,10 +370,10 @@ def task2_rosa(n=25):
 def main():
     n = 20
     
-    task_1_elipse(n)
-    task_1_hyperbole(n)
+    task_1_elipse()
+    task_1_hyperbole()
 
-    task_2(n)
+    task_2()
     task2_rosa(500)
     pass
 

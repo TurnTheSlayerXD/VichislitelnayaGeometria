@@ -12,15 +12,15 @@ def dist(p1, p2) -> np.float64:
     return np.float64(np.linalg.norm(p2 - p1))
 
 
-def display_points(points, segments, labels=['unknown']):
+def display_points(points, segments, labels=['unknown'], title='none'):
     colors = np.array(['black', 'red', 'orange', 'yellow',
                       'green', 'blue', 'violet'])
+    plt.title(title)
     plt.grid()
     plt.scatter(points[:, 0], points[:, 1], color=colors[0])
     plt.plot(segments[:, 0], segments[:, 1], color=colors[1])
     last = np.array([segments[-1], segments[0]])
     plt.plot(last[:, 0], last[:, 1], color=colors[1])
-    np.clip
     plt.show()
 
 
@@ -107,7 +107,7 @@ def main():
     print(f'Points = {points}')
     p1, p2 = closest_points(points)
 
-    display_points(points, np.array([p1, p2]))
+    display_points(points, np.array([p1, p2]), title='Closest points')
 
     print(p1, p2)
 
