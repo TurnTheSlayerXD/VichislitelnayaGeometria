@@ -87,13 +87,16 @@ def task_2():
         @ tr.homotetia(k=2)\
         @ tr.rotate(-angle) \
         @ tr.perenos(Tx=-sqr[0][0], Ty=-sqr[0][1])\
-
-
+        
+    print(trans)
+    print(inv(trans))    
+    
+    print(trans @ inv(trans))
     para = (trans @ sqr.T).T
 
     para_inv = (inv(trans) @ para.T).T
 
-    print(norm(sqr[0] - para[0]),  norm(sqr[0] - sqr[2]) * 3)
+    # print(norm(sqr[0] - para[0]),  norm(sqr[0] - sqr[2]) * 3)
     assert np.isclose(norm(sqr[0] - para[0]),  norm(sqr[0] - sqr[2]) * 3)
 
     assert np.isclose(norm(para[3] - para[0]), norm(sqr[0] - sqr[3]) * 2)

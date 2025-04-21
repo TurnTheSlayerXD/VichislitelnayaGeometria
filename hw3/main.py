@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 import matplotlib.pyplot as plt
 
-def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 20, 1])):
+def task_1(A=np.array([0, 0, 1]), B=np.array([15, 10, 1])):
     x0, y0, _ = A
     x1, y1, _ = B
 
@@ -44,31 +44,58 @@ def task_1(A=np.array([-10, -7, 1]), B=np.array([15, 20, 1])):
 
     points = np.array(points)
 
-    plt.grid()
-    ax = plt.gca()
-    ax.set_aspect('equal', adjustable='box')
-    plt.plot(points[:, 0], points[:, 1], 'o', color='black', markersize=4,
-            label='Brezenheim')
-    plt.plot(points2[:, 0], points2[:, 1], 'o', color='red', markersize=2,
-             label='By equation')
-    plt.legend(loc='best')
+    img = np.zeros((20, 20, 3), dtype=np.uint8)
+
+    for p in points:
+        img[p[0],p[1]] = [255, 0, 0]
+    
+    for p in points2:
+        img[p[0],p[1]] = [0, 255, 0]
+
+
+    # Отображаем результат
+    plt.imshow(img)
+    plt.axis('off')
     plt.show()
 
 
 
+def display_points(points: list, ps, labels=['unknown']):
+    colors = np.array(['black', 'red', 'orange', 'yellow', 'green', 'blue', 'violet'])
+    plt.grid()
+
+    ax = plt.gca()
+    ax.set_aspect('equal', adjustable='box')
+
+    for i, line in enumerate(points):
+        label=labels[i % len(labels)]
+        if label != 'unknown':
+            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=1,
+                    label=label)
+        else:
+            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=1)
+    
+    for i, batch in enumerate(ps):
+        plt.scatter(batch[:, 0], batch[:, 1], color=colors[i % len(colors)])
+        
+    plt.legend(loc='best')
+
+    plt.show()
+
+
 def task_2_a():
-    points = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1],
-                      [1, -1, 1]], dtype=np.float64)
+    points = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.float64)
 
-    final = tr.bezie_line(points, 3)
+    final = tr.bezie_line(points, 2)
 
-    r1 = tr.rotate(fi=np.pi / 4) @ final.transpose()
-    r2 = tr.shear() @ r1
-    r3 = tr.perenos() @ r2
-    r4 = tr.homotetia() @ r3
+    r1 = (tr.rotate(fi=np.pi / 4) @ points.T).T
+    r2 = (tr.shear() @ r1.T).T
+    r3 = (tr.perenos() @ r2.T).T
+    r4 = (tr.homotetia() @ r3.T).T
 
-    dis.display_points(
-        [final, r1.transpose(), r2.transpose(), r3.transpose(), r4.transpose()],
+    display_points(
+        [final, tr.bezie_line(r1, 2),  tr.bezie_line(r2, 2),  tr.bezie_line(r3, 2),  tr.bezie_line(r4, 2)],
+        [points, r1, r2, r3, r4],
         ['Begin stage', 'Rotate stage', 'Shear stage', 'Perenos stage', 'Homotetia stage'])
 
 
@@ -89,7 +116,7 @@ def task_2_b():
                   [2, 0, 1]], dtype=np.float64)
     f4 = tr.bezie_line(p4, 3)
 
-    dis.display_points([f1, f2, f3, f4])
+    display_points([f1, f2, f3, f4],[p1, p2, p3, p4])
 
 
 def task_2_c():

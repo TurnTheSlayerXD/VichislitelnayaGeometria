@@ -57,7 +57,7 @@ def display_figs(points : list, polygons : list, title:str = 'None'):
     
     for i, batch in enumerate(points):
         if len(batch) > 0:
-            plt.scatter(batch[:, 0], batch[:, 1], color=color_points[ i % len(color_points)])
+            plt.scatter(batch[:, 0], batch[:, 1], color=color_points[i % len(color_points)])
     plt.title(title)
         
     plt.show()
@@ -195,19 +195,22 @@ def sutherland_hodgman(subject_polygon, clip_polygon):
     return output_list
 
 
-def point_in_polygon(point, polygon):
-    x, y = point
-    inside = False
-    n = len(polygon)
-
+def point_in_polygon_ray(M, poly, ):
+    x0, y0 = M
+    cnt = 0
+    n = len(poly)
     for i in range(n):
-        x0, y0 = polygon[i]
-        x1, y1 = polygon[(i + 1) % n]
-        if (y0 > y) != (y1 > y):
-            x_int = (x1 - x0) * (y - y0) / (y1 - y0 + 1e-10) + x0
-            if x < x_int:
-                inside = not inside
-    return inside
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i+1) % n]
+        if np.all(np.isclose(poly[i], M)) or  np.all(np.isclose(poly[(i+1) % n], M)):
+            return True
+        if ((y1 > y0) != (y2 > y0)):
+            x_int = x1 + (y0 - y1) * (x2 - x1) / (y2 - y1)
+            if x_int > x0:
+                cnt += 1
+
+    return cnt % 2 == 1
+
 
 
 def gen_points(count, sqr_size):
@@ -250,16 +253,26 @@ def task2():
 
 
 def task3():
-    points_f = gen_points(20, 10**2)
-    conv = conv_jarvis(points_f)
+    points_f = gen_points(10, 10**2)
+    
+    # points_f = np.array([ [0, 0], [10, 0], [10, 10], [0, 10]])
+    conv = conv_grakham(points_f)
     
     points_s = gen_points(20, 10**2)
-    conv2 = conv_jarvis(points_s)
+    # points_s = np.array([ [5, 0], [15, 0], [15, 15], [0, 10]])
+    
+    conv2 = conv_grakham(points_s)
     
     result = sutherland_hodgman(conv, conv2)
     result = np.array([list(p) for p in result])
-    points_r = np.array(list(filter( lambda p : point_in_polygon(p, result), np.concat([points_f, points_s]))))
-
+    
+    points_r = []
+    for p in [*points_f, *points_s]:
+        if point_in_polygon_ray(p, result):
+            points_r.append(p)
+            print(p)
+            
+    points_r = np.array(points_r)
     display_figs([points_f, points_s, points_r], [conv, conv2, result], 'intersection')
 
 
