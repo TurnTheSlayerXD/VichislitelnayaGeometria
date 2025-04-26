@@ -1,7 +1,7 @@
 
 import numpy as np
 from point2d import Point2d, NegInfPoint2d, PosInfPoint2d
-EPS = 1e-4
+EPS = 1e-5
 
 
 class Line2d:
@@ -10,6 +10,7 @@ class Line2d:
         self.A = A
         self.B = B
         self.C = C
+
         pass
 
     @staticmethod
@@ -34,6 +35,10 @@ class Line2d:
     def segment_intersection(self, segment: 'Segment2d') -> Point2d:
         rhs = Line2d.from_segment(segment)
         inter_point = self.line_intersection(rhs)
+        
+        # print(f'inter_point = {inter_point}')
+        # print(f'line = {self}')
+        # print(f'segment = {segment}')
 
         if type(inter_point) is NegInfPoint2d:
             inter_point = segment.b
@@ -43,9 +48,8 @@ class Line2d:
 
     def line_intersection(self, rhs: 'Line2d') -> Point2d:
         cross_prod_norms = self.A * rhs.B - self.B * rhs.A
-
         if np.isclose(cross_prod_norms, 0, atol=EPS):
-            if np.isclose(rhs.C, self.C, 0, atol=EPS):
+            if np.isclose(rhs.C, self.C, atol=EPS):
                 inter_point = NegInfPoint2d()
             else:
                 inter_point = PosInfPoint2d()
@@ -73,12 +77,11 @@ class Line2d:
         else:
             return f'x={-self.C / self.A}'
         
-EPS = 1e-4
 
 
 class Segment2d:
     def __init__(self, a: Point2d, b: Point2d):
-        self.a, self.b = (a, b) if a.x() < b.x() else (b, a)
+        self.a, self.b = (a, b) 
 
     def center(self) -> Point2d:
         return Point2d([(self.a.x() + self.b.x()) / 2, (self.a.y() + self.b.y()) / 2])
@@ -89,10 +92,13 @@ class Segment2d:
         lower_y = min(self.a.y(), self.b.y())  # type: ignore
         upper_y = max(self.a.y(), self.b.y())  # type: ignore
 
-        return lower_x <= point.x() and point.x() <= upper_x and lower_y <= point.y() and point.y() <= upper_y
+        return (lower_x < point.x() < upper_x or 
+               np.isclose(point.x(), lower_x, atol=EPS) or  np.isclose(point.x(), upper_x, atol=EPS))\
+            and (lower_y < point.y() < upper_y or\
+               np.isclose(point.y(), lower_y, atol=EPS) or  np.isclose(point.y(), upper_y, atol=EPS))
+            
 
     def contains(self, p: Point2d) -> bool:
-
         cur_line = Line2d.from_segment(self)
         return cur_line.contains(p) and self.point_in_box(p)
 
@@ -140,4 +146,7 @@ class Segment2d:
     def as_vector(self) -> np.ndarray:
         return np.array([self.b.x() - self.a.x(), self.b.y() - self.a.y()])
 
-   
+    
+    def __repr__(self) -> str:
+        
+        return f'a={self.a}  b = {self.b}'
