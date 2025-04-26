@@ -53,6 +53,7 @@ def display_figs(points : list, polygons : list, title:str = 'None'):
             t = Polygon(poly[:], alpha=0.5,
                             color=colors[i % len(colors)])
             plt.gca().add_patch(t)
+            plt.scatter(poly[:,0], poly[:,1])
         
     
     for i, batch in enumerate(points):
@@ -253,12 +254,12 @@ def task2():
 
 
 def task3():
-    points_f = gen_points(10, 10**2)
+    points_f = gen_points(3, 10)
     
     # points_f = np.array([ [0, 0], [10, 0], [10, 10], [0, 10]])
     conv = conv_grakham(points_f)
     
-    points_s = gen_points(20, 10**2)
+    points_s = gen_points(3, 10)
     # points_s = np.array([ [5, 0], [15, 0], [15, 15], [0, 10]])
     
     conv2 = conv_grakham(points_s)
@@ -279,8 +280,8 @@ def task3():
 def main():
     warnings.filterwarnings('ignore')
 
-    task1()
-    task2()
+    # task1()
+    # task2()
     task3()
 
 if __name__ == '__main__':
