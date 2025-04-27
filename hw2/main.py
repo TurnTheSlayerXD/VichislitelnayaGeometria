@@ -222,7 +222,7 @@ def task_1_elipse(n=50):
     for i, batch in enumerate([l1, l2]):
         plt.plot(batch[:, 0], batch[:, 1])
     for i, batch in enumerate(segs):
-        plt.plot(batch[:, 0], batch[:, 1], linewidth=3.)
+        plt.plot(batch[:, 0], batch[:, 1], linewidth=1)
         
     plt.xlim([-10,10])
     plt.ylim([-10,10])
@@ -230,10 +230,10 @@ def task_1_elipse(n=50):
 
 
 def task_1_hyperbole(n=25):
-    hyperbole = Hyperbole(5., 2.)
+    hyperbole = Hyperbole(-5., 3.)
     step = 10 ** -2
     arr = []
-    for fi in np.arange(-10, 10, step):
+    for fi in np.arange(-5, 10, step):
         arr.append([hyperbole.x(fi), hyperbole.y(fi), 1])
 
     l1 = np.array(arr)
@@ -270,7 +270,7 @@ def task_1_hyperbole(n=25):
     for i, batch in enumerate([l1,l1_2, l2,l2_2]):
         plt.plot(batch[:, 0], batch[:, 1])
     for i, batch in enumerate(segs + segs_1):
-        plt.plot(batch[:, 0], batch[:, 1], linewidth=3.)
+        plt.plot(batch[:, 0], batch[:, 1], linewidth=1)
         
     plt.xlim([-50,50])
     plt.ylim([-20,20])

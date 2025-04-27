@@ -321,7 +321,9 @@ def show_voronoi_delone(diagram : VoronoiDiagram, delone : list[Segment2d], bb):
 def main():
     np.seterr(all='raise')
     np.set_printoptions(precision=2)
-    points = gen_points(10, 200_000)
+    points = gen_points(300, 200_000)
+    
+    
     # points = np.array([[139.54343688,  59.62712917],
     #                 [109.34011209 , 43.47010423],
     #                 [ 58.82536292, 176.75898259],
@@ -337,7 +339,19 @@ def main():
     
     # print(points.tolist())
     
+    
+    
     borderbox = borderbox_from_points(points)
+
+    plt.grid()
+    ax = plt.gca()
+    ax.set_aspect('equal', adjustable='box')
+
+
+    plt.plot(borderbox[:, 0], borderbox[:, 1])
+    plt.scatter(points[:, 0], points[:, 1])
+    
+    plt.show()
 
     diagram = VoronoiDiagram.from_points(points, borderbox)
 

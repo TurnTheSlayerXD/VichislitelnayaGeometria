@@ -39,10 +39,13 @@ def task_1(A=np.array([0, 0, 1]), B=np.array([15, 10, 1])):
     c = B[1] - k * B[0] 
 
     x_ = list(range(A[0], B[0] + 1))
-    points2 = np.array([ [x, int(k * x + c)] for x in x_])
-
+    points2 = np.array([ [x, int(k * x + c + 3)] for x in x_])
 
     points = np.array(points)
+
+
+    print('points', points)
+    print('points2', points2)
 
     img = np.zeros((20, 20, 3), dtype=np.uint8)
 
@@ -52,7 +55,6 @@ def task_1(A=np.array([0, 0, 1]), B=np.array([15, 10, 1])):
     for p in points2:
         img[p[0],p[1]] = [0, 255, 0]
 
-
     # Отображаем результат
     plt.imshow(img)
     plt.axis('off')
@@ -60,7 +62,7 @@ def task_1(A=np.array([0, 0, 1]), B=np.array([15, 10, 1])):
 
 
 
-def display_points(points: list, ps, labels=['unknown']):
+def display_points(points: list, ps, labels=['unknown'], title='None'):
     colors = np.array(['black', 'red', 'orange', 'yellow', 'green', 'blue', 'violet'])
     plt.grid()
 
@@ -70,15 +72,16 @@ def display_points(points: list, ps, labels=['unknown']):
     for i, line in enumerate(points):
         label=labels[i % len(labels)]
         if label != 'unknown':
-            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=1,
+            plt.plot(line[:, 0], line[:, 1], color=colors[i % len(colors)], markersize=1,
                     label=label)
         else:
-            plt.plot(line[:, 0], line[:, 1], 'o', color=colors[i % len(colors)], markersize=1)
+            plt.plot(line[:, 0], line[:, 1], color=colors[i % len(colors)], markersize=1)
     
     for i, batch in enumerate(ps):
         plt.scatter(batch[:, 0], batch[:, 1], color=colors[i % len(colors)])
         
     plt.legend(loc='best')
+    plt.title(title)
 
     plt.show()
 
@@ -96,7 +99,8 @@ def task_2_a():
     display_points(
         [final, tr.bezie_line(r1, 2),  tr.bezie_line(r2, 2),  tr.bezie_line(r3, 2),  tr.bezie_line(r4, 2)],
         [points, r1, r2, r3, r4],
-        ['Begin stage', 'Rotate stage', 'Shear stage', 'Perenos stage', 'Homotetia stage'])
+        ['Begin stage', 'Rotate stage', 'Shear stage', 'Perenos stage', 'Homotetia stage'],
+        'Кривые 2-го порядка')
 
 
 def task_2_b():
@@ -116,46 +120,56 @@ def task_2_b():
                   [2, 0, 1]], dtype=np.float64)
     f4 = tr.bezie_line(p4, 3)
 
-    display_points([f1, f2, f3, f4],[p1, p2, p3, p4])
+    display_points([f1, f2, f3, f4],[p1, p2, p3, p4], title='Кривые 3-го порядка')
 
 
 def task_2_c():
 
-    p = np.array([[-3, 0, 1], [-3, 6, 1], [3, 6, 1], [3, 0, 1]])
+    p1 = np.array([[-3, 0, 1], [-3, 6, 1], [3, 6, 1], [3, 0, 1]])
 
-    l_window = tr.bezie_line(p, line_order=3)
+    l_window = tr.bezie_line(p1, line_order=3)
 
-    l_roof = (tr.homotetia(k=2) @ l_window.transpose()).transpose()
+    l_roof = (tr.homotetia(k=2) @ l_window.T).T
 
-    p = np.array([[-9, -5, 1], [-9, -3, 1], [-9, 0, 1], [-6, 0, 1]])
-    l_front = tr.bezie_line(p, line_order=3)
+    p2 = np.array([[-9, -5, 1], [-9, -1, 1], [-6, -5, 1], [-6, 0, 1]])
+    l_front = tr.bezie_line(p2, line_order=3)
 
-    l_back = (tr.perenos(0, 0) @ tr.reflect(axis='y')
-              @ l_front.transpose()).transpose()
+    l_back = ( tr.reflect(axis='y')
+              @ l_front.T).T
 
-    p = np.array([[-6, -5, 1], [-3, -5, 1], [-3, -9, 1], [-6, -9, 1]])
+    p3 = np.array([[-6, -7, 1], [-3, -7, 1], [-3, -11, 1], [-6, -11, 1]])
 
-    l_wheel_left_1 = tr.bezie_line(p, line_order=3)
-    l_wheel_left_2 = (tr.rotate(fi=np.pi, axis=np.array(
-        [-6, -7])) @ l_wheel_left_1.transpose()).transpose()
+    l_wheel_left_1 = tr.bezie_line(p3, line_order=3)
+    l_wheel_left_2 = (tr.rotate(fi=np.pi, axis=np.array([-6, -9])) @ l_wheel_left_1.T).T
 
     l_wheel_right_1 = (tr.reflect(
-        'y') @ l_wheel_left_1.transpose()).transpose()
+        'y') @ l_wheel_left_1.T).T
     l_wheel_right_2 = (tr.reflect(
-        'y') @ l_wheel_left_2.transpose()).transpose()
+        'y') @ l_wheel_left_2.T).T
 
-    p = np.array([[-3, 0, 1], [3, 0, 1]])
-    l_border_window = tr.bezie_line(p, line_order=1)
+    # p4 = np.array([[-3, 0, 1], [0, -1, 1], [3, 0, 1]])
+    p4 = np.array([ [-3, 0 , 1], [-3,-0.8,1] ,[0, -0.8, 1]])
+    p4_2 = (tr.reflect('y') @ p4.T).T
+    # l_border_window = tr.bezie_line(p4, line_order=2)
+    l_border_window_1 =  tr.bezie_line(p4, line_order=2)
+    l_border_window_2 = tr.bezie_line(p4_2, line_order=2)
+    
 
-    l_border_wheels = (tr.perenos(Tx=0, Ty=-5) @ tr.homotetia(k=3)
-                       @ l_border_window.transpose()).transpose()
+    l_border_wheels_1 = (tr.perenos(Tx=0, Ty=-5) @ tr.homotetia(k=3)
+                       @ l_border_window_1.T).T
 
-    dis.display_points([l_window,
+
+    l_border_wheels_2 = (tr.perenos(Tx=0, Ty=-5) @ tr.homotetia(k=3)
+                       @ l_border_window_2.T).T
+
+    display_points([l_window,
                         l_roof,
                         l_back, l_front,
                         l_wheel_left_1, l_wheel_left_2,
                         l_wheel_right_1, l_wheel_right_2,
-                        l_border_window, l_border_wheels])
+                        l_border_window_1, l_border_window_2,
+                        l_border_wheels_1, l_border_wheels_2],
+                        [p1, p2, p3, p4])
 
 
 def main():
