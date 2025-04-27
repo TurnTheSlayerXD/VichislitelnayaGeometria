@@ -10,7 +10,7 @@ colors = np.array(['black', 'red', 'yellow', 'yellow',
                    'green', 'blue', 'violet'])
 
 
-    
+EPS = 10 ** -5
 
 
 class Polygon:
@@ -33,6 +33,7 @@ class Polygon:
             if halfplane.sign(point) == halfplane.sign(Point2d(self.vertices[i])):
                 convex_points.append(self.vertices[i])
         
+        
         # print(f'convex_points = {convex_points}')
         # print(f'point = {point}')
         # print(f'halfplane = {halfplane}')
@@ -40,13 +41,26 @@ class Polygon:
 
 
         convex_points = grakham_convex(np.array(convex_points))
+        
+        # plt.plot(self.vertices[:,0], self.vertices[:,1], color='blue')
+        # plt.plot(self.vertices[(-1,0),0], self.vertices[(-1,0),1], color='blue')
+        
+        # plt.plot(convex_points[:, 0], convex_points[:, 1], color='red')
+        # plt.plot(convex_points[(-1,0), 0], convex_points[(-1,0), 1], color='red')
+        # plt.scatter(convex_points[:, 0], convex_points[:, 1], color='red')
+        
+        # plt.scatter(point.x(), point.y(), color='green')
+        
+        # plt.title(f'{halfplane}')
+        # plt.show()        
+        
+        
         return Polygon(convex_points)
         
         
 
     def intersect_with_poly(self, rhs: 'Polygon') -> 'Polygon':
         ps = sutherland_hodgman(self.vertices, rhs.vertices)
-        arr = [ps, self.vertices, rhs.vertices]
         return Polygon(ps)
 
 
@@ -61,9 +75,35 @@ def get_half_plane_intersection(cur_point: Point2d, halfplanes: list[Line2d], bo
     
     
     inter_poly= lhs.intersect_with_poly(rhs)
-
-    # print(inter_poly.vertices)
     
+    
+    # print('lhs', lhs.vertices)
+    # print('rhs', rhs.vertices)
+    # print('inter_poly', inter_poly.vertices)
+
+    # a = dis.Polygon(lhs.vertices[:], alpha=0.5,
+    #                     color='green')
+    # plt.gca().add_patch(a)
+
+    # b = dis.Polygon(rhs.vertices[:], alpha=0.5,
+    #                     color='blue')
+    # plt.gca().add_patch(b)
+
+    # c = dis.Polygon(inter_poly.vertices[:], alpha=0.5,
+    #                     color='red')
+    # plt.gca().add_patch(c)
+    
+    # ax = plt.gca()
+    # ax.set_aspect('equal', adjustable='box')
+    # plt.grid()
+    
+    # bb = borderbox.vertices
+    # plt.plot(bb[:,0], bb[:,1], color='blue')
+    # plt.plot(bb[(-1,0),0], bb[(-1,0),1], color='blue')
+   
+    # plt.show()
+     
+
     # plt.plot(lhs.vertices[:, 0], lhs.vertices[:, 1], color='blue')
     # plt.plot(lhs.vertices[(-1,0), 0], lhs.vertices[(-1,0), 1], color='blue')
     
@@ -72,11 +112,6 @@ def get_half_plane_intersection(cur_point: Point2d, halfplanes: list[Line2d], bo
     
     # plt.plot(inter_poly.vertices[:, 0], inter_poly.vertices[:, 1], color='red')
     # plt.plot(inter_poly.vertices[(-1,0), 0], inter_poly.vertices[(-1,0), 1], color='red')
-    
-    
-    plt.show()
-    
-    # assert len(inter_poly.vertices) >= 4
     
     return inter_poly
 
@@ -172,9 +207,77 @@ def gen_points(count, sqr_size):
     return res
 
 
+def find_first_norm(segment : Segment2d, diagram: VoronoiDiagram):
+    
+    for locus in diagram.locuses:
+        vertices = locus.region.vertices
+        for i in range(len(vertices)):
+            j  = (i + 1) % len(vertices)
+            rhs = Segment2d(Point2d(vertices[i]),Point2d(vertices[j]))
+            if segment.get_point_intersection(rhs) is not PosInfPoint2d\
+                and segment.get_point_intersection(rhs) is not NegInfPoint2d\
+                and np.isclose(np.cross(segment.normal_vec(), rhs.as_vector()), 0, atol=10**-10):
+                return rhs
+    
+    return None
+    
+    
+def have_common_side(locus_a : VoronoiLocus, locus_b: VoronoiLocus) -> bool:
+    edges_a = [[locus_a.region.vertices[i], 
+                   locus_a.region.vertices[ (i + 1) % len(locus_a.region.vertices)] ] 
+               for i in range(len(locus_a.region.vertices))]
+    edges_b = [[locus_b.region.vertices[i], 
+                   locus_b.region.vertices[ (i + 1) % len(locus_b.region.vertices)] ] 
+               for i in range(len(locus_b.region.vertices))]
+    for a in edges_a:
+        for b in edges_b:
+            if np.all(np.isclose(a[0], b[0], atol=EPS)) and np.all(np.isclose(a[1] , b[1], atol=EPS)) or\
+                np.all(np.isclose(a[0], b[1], atol=EPS)) and np.all(np.isclose(a[1] , b[0], atol=EPS)):
+                    return True
+    return False
+    
+
+def delone_triangulation( points : np.ndarray, diagram : VoronoiDiagram):
+    triangulation = []
+    locuses = diagram.locuses
+    for i in range(len(locuses) - 1):
+        for j in range(i + 1, len(locuses)):
+            if have_common_side(locuses[i], locuses[j]):
+                triangulation.append( Segment2d( locuses[i].site, locuses[j].site) )
+                
+    return triangulation
+
+
+def show_voronoi_delone(diagram : VoronoiDiagram, delone : list[Segment2d], bb):
+    plt.grid()
+    ax = plt.gca()
+    ax.set_aspect('equal', adjustable='box')
+
+    for locus in diagram.locuses:
+        if len(locus.region.vertices > 0):
+            plt.plot(locus.region.vertices[:, 0], locus.region.vertices[:, 1])
+            plt.plot(locus.region.vertices[(-1,0), 0], locus.region.vertices[(-1,0), 1])
+        plt.scatter([locus.site.x()], [locus.site.y()])
+
+    plt.plot(bb[:,0], bb[:,1], color='blue')
+    plt.plot(bb[(-1,0),0], bb[(-1,0),1], color='blue')
+
+    
+    for seg in delone:
+        a = seg.a.as_array()
+        b = seg.b.as_array()
+        plt.plot([ a[0], b[0] ],[ a[1], b[1] ] , color='black')
+    
+    
+    plt.show()
+
+
+
+
 def main():
     np.seterr(all='raise')
-    points = gen_points(10, 200)
+    np.set_printoptions(precision=2)
+    points = gen_points(10, 100_000)
     # points = np.array([[139.54343688,  59.62712917],
     #                 [109.34011209 , 43.47010423],
     #                 [ 58.82536292, 176.75898259],
@@ -186,50 +289,21 @@ def main():
     #                 [179.49487108, 135.34627561],
     #                 [ 99.71726674, 105.05841281],])
     
-    print(points)
     
-    # points = np.array([[0, 1], [1, 3], [2,  2], [3, 0], [6, 8]], dtype=np.float64)
-    # points = np.array([ [1, 0], [2, 0]] ,dtype=np.float64)
+    # print(points.tolist())
+    
     borderbox = borderbox_from_points(points)
 
     diagram = VoronoiDiagram.from_points(points, borderbox)
 
     diagram.plt_display(borderbox)
 
+    delone = delone_triangulation(points, diagram)
+
+    show_voronoi_delone(diagram, delone, borderbox)
+
     pass
 
 
 if __name__ == '__main__':
-    
-    
-    
-    # print(Point2d([0,1]) != Point2d([0,1])) 
-    
     main()
-
-
-
-
-
-# Failures
- # points = np.array([[ 98.181779,    58.42919726],
-    #                     [106.1883763 ,  18.19688011],
-    #                     [186.60677075, 102.04045121],
-    #                     [ 73.59406036, 161.39945519],
-    #                     [194.12245575, 127.79241211],
-    #                     [ 75.08986996, 155.65355811],
-    #                     [ 62.78794585 ,175.52340751],
-    #                     [ 89.57329042, 106.68638621],
-    #                     [133.51096216 ,177.50375721],
-    #                     [110.07678984 , 95.93537674],])
-    
-  # points = np.array([[40.53868081 ,16.81670574],
-    #                     [50.87877847, 44.77906895],
-    #                     [94.41595221, 26.14659082],
-    #                     [72.90740551, 54.82827167],
-    #                     [ 4.96244047, 97.43623469],
-    #                     [54.46548178, 98.95442426],
-    #                     [30.10848907 ,54.5129292 ],
-    #                     [14.52959804, 99.04380064],
-    #                     [15.20834368 ,26.5344677 ],
-    #                     [35.12431502, 26.70405088]])

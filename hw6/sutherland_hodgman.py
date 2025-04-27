@@ -1,10 +1,13 @@
 
 import numpy as np
 
+EPS = 1e-5
 
 def inside(p, edge_start, edge_end):
-    return (edge_end[0] - edge_start[0]) * (p[1] - edge_start[1]) - \
-           (edge_end[1] - edge_start[1]) * (p[0] - edge_start[0]) >= 0
+    val = (edge_end[0] - edge_start[0]) * (p[1] - edge_start[1]) - \
+           (edge_end[1] - edge_start[1]) * (p[0] - edge_start[0])
+    
+    return val > 0 or np.isclose(val , 0, atol = EPS)
 
 
 def intersection(p1, p2, cp1, cp2):
