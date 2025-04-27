@@ -150,3 +150,12 @@ class Segment2d:
     def __repr__(self) -> str:
         
         return f'a={self.a}  b = {self.b}'
+    
+    
+    def __eq__(self, rhs) -> bool:
+        if type(rhs) is Segment2d:
+            return self.a == rhs.b and self.b == rhs.b or self.a == rhs.b and self.b == rhs.a 
+        return False
+    
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)

@@ -120,6 +120,17 @@ class VoronoiLocus:
         self.region = convex
         self.site = point
 
+        self.neighbours : list[tuple[VoronoiLocus, Segment2d]] = []
+        
+        
+    def __eq__(self, rhs):
+        if type(rhs) is VoronoiLocus:
+            return self.site == rhs.site
+        return False
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs) 
+
 
 class VoronoiDiagram:
 
@@ -222,7 +233,7 @@ def find_first_norm(segment : Segment2d, diagram: VoronoiDiagram):
     return None
     
     
-def have_common_side(locus_a : VoronoiLocus, locus_b: VoronoiLocus) -> bool:
+def get_common_side(locus_a : VoronoiLocus, locus_b: VoronoiLocus) -> Segment2d | None:
     edges_a = [[locus_a.region.vertices[i], 
                    locus_a.region.vertices[ (i + 1) % len(locus_a.region.vertices)] ] 
                for i in range(len(locus_a.region.vertices))]
@@ -233,17 +244,29 @@ def have_common_side(locus_a : VoronoiLocus, locus_b: VoronoiLocus) -> bool:
         for b in edges_b:
             if np.all(np.isclose(a[0], b[0], atol=EPS)) and np.all(np.isclose(a[1] , b[1], atol=EPS)) or\
                 np.all(np.isclose(a[0], b[1], atol=EPS)) and np.all(np.isclose(a[1] , b[0], atol=EPS)):
-                    return True
-    return False
+                    return Segment2d(Point2d(a[0]), Point2d(b[0]))
+    return None
     
 
-def delone_triangulation( points : np.ndarray, diagram : VoronoiDiagram):
+def delone_triangulation(diagram : VoronoiDiagram) -> list:
     triangulation = []
     locuses = diagram.locuses
+        
     for i in range(len(locuses) - 1):
         for j in range(i + 1, len(locuses)):
-            if have_common_side(locuses[i], locuses[j]):
-                triangulation.append( Segment2d( locuses[i].site, locuses[j].site) )
+            
+            common_side = get_common_side(locuses[i], locuses[j])
+            if common_side is not None:
+                
+                if (locuses[j], common_side) not in locuses[i].neighbours:
+                    locuses[i].neighbours.append((locuses[j], common_side))
+                
+                if (locuses[i], common_side) not in locuses[j].neighbours:
+                    locuses[j].neighbours.append((locuses[i], common_side))
+                
+                edge = Segment2d(locuses[i].site, locuses[j].site)
+                if edge not in triangulation:
+                    triangulation.append(edge)
                 
     return triangulation
 
@@ -259,15 +282,36 @@ def show_voronoi_delone(diagram : VoronoiDiagram, delone : list[Segment2d], bb):
             plt.plot(locus.region.vertices[(-1,0), 0], locus.region.vertices[(-1,0), 1])
         plt.scatter([locus.site.x()], [locus.site.y()])
 
-    plt.plot(bb[:,0], bb[:,1], color='blue')
-    plt.plot(bb[(-1,0),0], bb[(-1,0),1], color='blue')
-
+   
     
     for seg in delone:
         a = seg.a.as_array()
         b = seg.b.as_array()
         plt.plot([ a[0], b[0] ],[ a[1], b[1] ] , color='black')
     
+    
+    all_verts = { tuple(vert): (0.,0) for locus in diagram.locuses for vert in locus.region.vertices}
+    for v in all_verts:    
+        for locus in diagram.locuses:
+            for locus_v in locus.region.vertices:            
+                if np.all(np.isclose(locus_v, v, atol=EPS)):
+                    all_verts[tuple(v)] = (float(np.linalg.norm(v - locus.site.as_array())), 
+                                    all_verts[tuple(v)][1] + 1)
+                    break
+
+    all_verts = { k: v[0] for k, v in all_verts.items() if v[1] >= 3}
+    
+    # for center, radius in all_verts.items():
+    #     circ = dis.Circle(center, radius, fill=False)
+    #     plt.gca().add_patch(circ)
+    
+    plt.plot(bb[:,0], bb[:,1], color='blue')
+    plt.plot(bb[(-1,0),0], bb[(-1,0),1], color='blue', linewidth=10**-2)
+
+
+    plt.xlim( (bb[0][0] - 3, bb[1][0] + 3))
+    plt.ylim( (bb[0][1] - 3, bb[2][1] + 3))
+
     
     plt.show()
 
@@ -277,18 +321,19 @@ def show_voronoi_delone(diagram : VoronoiDiagram, delone : list[Segment2d], bb):
 def main():
     np.seterr(all='raise')
     np.set_printoptions(precision=2)
-    # points = gen_points(10, 200_000)
-    points = np.array([[139.54343688,  59.62712917],
-                    [109.34011209 , 43.47010423],
-                    [ 58.82536292, 176.75898259],
-                    [ 12.69652786, 191.37408475],
-                    [ 30.06396949, 110.16185165],
-                    [ 81.00592634,  57.10793624],
-                    [163.07741421,  28.07121078],
-                    [186.98378668 , 66.79453036],
-                    [179.49487108, 135.34627561],
-                    [ 99.71726674, 105.05841281],])
+    points = gen_points(10, 200_000)
+    # points = np.array([[139.54343688,  59.62712917],
+    #                 [109.34011209 , 43.47010423],
+    #                 [ 58.82536292, 176.75898259],
+    #                 [ 12.69652786, 191.37408475],
+    #                 [ 30.06396949, 110.16185165],
+    #                 [ 81.00592634,  57.10793624],
+    #                 [163.07741421,  28.07121078],
+    #                 [186.98378668 , 66.79453036],
+    #                 [179.49487108, 135.34627561],
+    #                 [ 99.71726674, 105.05841281],])
     
+    # points = np.array([ [1, 1], [ 1, 2], [3, 1] ]) 
     
     # print(points.tolist())
     
@@ -298,7 +343,7 @@ def main():
 
     diagram.plt_display(borderbox)
 
-    delone = delone_triangulation(points, diagram)
+    delone = delone_triangulation(diagram)
 
     show_voronoi_delone(diagram, delone, borderbox)
 
